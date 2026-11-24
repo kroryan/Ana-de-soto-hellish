@@ -33,6 +33,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 0.7
+    - _ColorDepth: 1.3
     - _HeadCameraRadius: 0
+    - _Saturation: 1.15
     m_Colors:
     - _HeadRestAnchor: {r: 0, g: 1.6, b: 0, a: 1}

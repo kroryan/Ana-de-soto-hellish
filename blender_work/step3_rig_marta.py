@@ -48,9 +48,16 @@ def align_frame(n, d1, l1, d2, l2):
     h = H(n); R = frame(d2, l2) @ frame(d1, l1).transposed()
     apply(n, Matrix.Translation(h) @ R.to_4x4() @ Matrix.Translation(-h))
 
-# The trunk, neck and head keep Marta's native joints: the model's spine spans
-# the same height (1.13-1.52 m), and fitting each joint stretched the upper chest
-# and neck by about a third. Only limbs and hands are fitted.
+# The trunk keeps Marta's joint layout, but the whole upper block (chest,
+# shoulders, neck, head) is lifted to the model's shoulder height. Marta's head
+# sits ~5 cm higher above her shoulders than these models; fitting only the
+# shoulders pulled them down and stretched the neck. The height difference is
+# shared between the Hips-Spine and Spine-Spine1 spans of the torso instead.
+lift = ((J['LeftArm']['head'].z + J['RightArm']['head'].z) / 2 -
+        (H('LeftArm').z + H('RightArm').z) / 2)
+move('Spine', H('Spine') + Vector((0, 0, lift / 2)))
+move('Spine1', H('Spine1') + Vector((0, 0, lift / 2)))
+print('UPPER_BODY_LIFT', round(lift, 4), flush=True)
 for s in ('Left', 'Right'):
     move(s + 'Shoulder', J[s + 'Shoulder']['head']); turn(s + 'Shoulder', s + 'Arm', J[s + 'Arm']['head'])
     move(s + 'Arm', J[s + 'Arm']['head']); turn(s + 'Arm', s + 'ForeArm', J[s + 'ForeArm']['head'])

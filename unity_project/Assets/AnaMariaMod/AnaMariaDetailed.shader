@@ -4,6 +4,8 @@ Shader "AnaMaria/DetailedTwoSided" {
   _BumpMap ("Normal", 2D) = "bump" {}
   _ORM ("Occlusion Roughness Metallic", 2D) = "white" {}
   _BumpScale ("Normal strength", Range(0,2)) = 1
+  _ColorDepth ("Color depth (deeper mid and light tones)", Range(1,2)) = 1.3
+  _Saturation ("Saturation", Range(0,2)) = 1.15
   [HideInInspector] _HeadCameraRadius ("Eye clearance near the head pivot", Float) = 0
   [HideInInspector] _HeadRestAnchor ("Head pivot in skin space", Vector) = (0,1.6,0,1)
  }
@@ -17,6 +19,7 @@ Shader "AnaMaria/DetailedTwoSided" {
   #include "UnityStandardUtils.cginc"
   sampler2D _MainTex, _BumpMap, _ORM;
   half _BumpScale;
+  half _ColorDepth, _Saturation;
   float _HeadCameraRadius;
   float4 _HeadRestAnchor;
   struct Input {float2 uv_MainTex; float3 worldPos; float4 color : COLOR; float facing : VFACE;};
@@ -57,7 +60,11 @@ Shader "AnaMaria/DetailedTwoSided" {
    #endif
    fixed4 color=tex2D(_MainTex, IN.uv_MainTex);
    half3 orm=tex2D(_ORM, IN.uv_MainTex).rgb;
-   o.Albedo=color.rgb;
+   // Same hues, less washed out in the game's lighting: a gentle curve
+   // deepens mid and light tones, then a small saturation lift.
+   half3 albedo=pow(saturate(color.rgb), _ColorDepth);
+   half luma=dot(albedo, half3(.2126,.7152,.0722));
+   o.Albedo=saturate(lerp(luma.xxx, albedo, _Saturation));
    o.Normal=UnpackScaleNormal(tex2D(_BumpMap, IN.uv_MainTex), _BumpScale);
    o.Normal*=IN.facing>=0 ? 1 : -1;
    o.Occlusion=lerp(0.5,1,orm.r);

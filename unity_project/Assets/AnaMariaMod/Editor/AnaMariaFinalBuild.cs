@@ -82,7 +82,7 @@ public static class AnaMariaFinalBuild {
   mat.SetTexture("_MainTex",AssetDatabase.LoadAssetAtPath<Texture2D>(D+"AnaMaria_BaseColor.png"));
   mat.SetTexture("_BumpMap",AssetDatabase.LoadAssetAtPath<Texture2D>(D+"AnaMaria_Normal.png"));
   mat.SetTexture("_ORM",AssetDatabase.LoadAssetAtPath<Texture2D>(D+"AnaMaria_ORM.png"));mat.SetFloat("_BumpScale",.7f);
-  mat.SetFloat("_HeadCameraRadius",0);EditorUtility.SetDirty(mat);
+  mat.SetFloat("_HeadCameraRadius",0);mat.SetFloat("_ColorDepth",1.3f);mat.SetFloat("_Saturation",1.15f);EditorUtility.SetDirty(mat);
   var headMat=AssetDatabase.LoadAssetAtPath<Material>(D+"AnaMariaHead.mat");
   if(headMat==null){headMat=new Material(mat);AssetDatabase.CreateAsset(headMat,D+"AnaMariaHead.mat");}
   headMat.shader=shader;headMat.CopyPropertiesFromMaterial(mat);
