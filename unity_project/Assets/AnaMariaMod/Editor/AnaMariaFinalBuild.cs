@@ -178,6 +178,10 @@ public static class AnaMariaFinalBuild {
      throw new Exception("Unexpected stretched triangle in the rigid head mesh: "+indices[i+j]+" "+points[indices[i+j]].ToString("F3")+" -> "+indices[i+(j+1)%3]+" "+points[indices[i+(j+1)%3]].ToString("F3")+" verts="+points.Length);
  }
  static void MakeSelectorPortrait() {
+  // A supplied artwork (model/selector_portrait.png) is the selector image;
+  // the 3D render below is the fallback when no artwork is present.
+  string art=Path.Combine(Root,"model/selector_portrait.png");
+  if(File.Exists(art)){File.Copy(art,D+"Skin_pic.png",true);return;}
   AnaMariaBuild.MakeScene();var camera=UnityEngine.Object.FindObjectOfType<Camera>();camera.backgroundColor=new Color(0,0,0,0);camera.clearFlags=CameraClearFlags.SolidColor;
   var map=GameObject.Find("Skin").GetComponentsInChildren<Transform>().ToDictionary(t=>t.name,t=>t);
   // Relaxed standing pose with nothing in the hands: the selector shows the
