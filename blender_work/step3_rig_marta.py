@@ -166,8 +166,11 @@ for i, v in enumerate(mesh.data.vertices):
     if co.z < BELT_Z - BELT_BAND or co.z > neck_z: continue
     w = per_vertex[i]
     t = min(1., (co.z - (BELT_Z - BELT_BAND)) / (2 * BELT_BAND))
-    lower = w.pop('Hips', 0) + w.pop('Spine', 0)
-    if lower * (1 - t) > 0: w['Spine'] = lower * (1 - t)
+    # Hips and Spine keep their own proportions; only the share t moves to the chest,
+    # so the weights stay continuous with the coat skirt below the band.
+    lower = w.get('Hips', 0) + w.get('Spine', 0)
+    for n in ('Hips', 'Spine'):
+        if n in w: w[n] *= (1 - t)
     w['Spine1'] = w.get('Spine1', 0) + lower * t
     if t >= 1:
         f = min(1., max(0., (SIDE_X - abs(co.x)) / (SIDE_X - CORE_X)))
