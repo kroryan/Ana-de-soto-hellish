@@ -90,6 +90,65 @@ for v in mesh.data.vertices:
     per_vertex.append(w)
 V0 = np.array([tuple(v.co) for v in mesh.data.vertices])
 
+# Arms rebuilt along Marta's bones. The source rig gives the top of the upper
+# arm to the clavicle and chest and spills arm weight onto the coat sides, so with
+# the arms down the armpits stretched and a wide gap opened between arm and body. Inside the
+# arm tube everything past the shoulder joint now belongs to the arm: a short
+# blend at the shoulder, the upper arm on Arm, a clean Arm->ForeArm blend at
+# the elbow and the forearm on ForeArm. The wrist and hand keep their own
+# (correct) source weights.
+ARM_TUBE_R, ARM_TUBE_WIDE = .13, .22
+# A cloth sleeve: the shoulder cap goes with the arm right past the joint.
+SHOULDER_IN, SHOULDER_OUT, ELBOW_HALF, WRIST_IN = .07, .0, .04, .03
+def smooth01(x): x = min(1., max(0., x)); return x * x * (3 - 2 * x)
+arm_fixed = 0
+for side, sg in (('Left', 1), ('Right', -1)):
+    js, je, jw = J[side + 'Arm']['head'], J[side + 'ForeArm']['head'], J[side + 'Hand']['head']
+    xs, xe, xw = sg * js.x, sg * je.x, sg * jw.x
+    for i, v in enumerate(mesh.data.vertices):
+        u = sg * v.co.x
+        if u < xs - SHOULDER_IN or u > xw - WRIST_IN: continue
+        a, b = (js, je) if u < xe else (je, jw)
+        f = min(1., max(0., (u - sg * a.x) / max(1e-6, sg * (b.x - a.x))))
+        axis = a.lerp(b, f)
+        # Near the shoulder the tube stays narrow (the cuirass side is right below);
+        # past the joint there is no torso, and the puffed sleeves are wide.
+        tube = ARM_TUBE_R if u < xs + .02 else ARM_TUBE_WIDE
+        if math.hypot(v.co.y - axis.y, v.co.z - axis.z) > tube: continue
+        # At the shoulder only the top of the joint follows the arm; the coat sides
+        # below it stay on the torso.
+        if u < xs + .02 and v.co.z < axis.z - .02: continue
+        if u < xe:
+            t_arm = smooth01((u - (xs - SHOULDER_IN)) / (SHOULDER_IN + SHOULDER_OUT))
+            t_fore = smooth01((u - (xe - ELBOW_HALF)) / (2 * ELBOW_HALF))
+        else:
+            t_arm, t_fore = 1., smooth01((u - (xe - ELBOW_HALF)) / (2 * ELBOW_HALF))
+        rest = {n: x for n, x in per_vertex[i].items() if not n.startswith(side + 'Arm') and not n.startswith(side + 'ForeArm')}
+        tot = sum(rest.values())
+        rest = {n: x / tot for n, x in rest.items()} if tot > 1e-6 else {side + 'Shoulder': 1.}
+        w = {n: x * (1 - t_arm) for n, x in rest.items()}
+        w[side + 'Arm'] = t_arm * (1 - t_fore); w[side + 'ForeArm'] = t_arm * t_fore
+        per_vertex[i] = {n: x for n, x in w.items() if x > 1e-4}; arm_fixed += 1
+print('ARMS_REBUILT', arm_fixed, flush=True)
+
+# The coat sides under the armpits belong to the torso: the arm weight the source
+# rig spilled onto them is handed to the chest, fading in over 6 cm below the
+# arm axis, so the arm hangs close to the body as in the original model.
+armpit_fixed = 0
+for side, sg in (('Left', 1), ('Right', -1)):
+    js = J[side + 'Arm']['head']; xs = sg * js.x
+    for i, v in enumerate(mesh.data.vertices):
+        u = sg * v.co.x
+        if u < xs - .12 or u > xs + .03: continue
+        t = smooth01((js.z - .02 - v.co.z) / .06)
+        if t <= 0: continue
+        w = per_vertex[i]; arm_w = sum(x for n, x in w.items() if n.startswith((side + 'Arm', side + 'ForeArm')))
+        if arm_w <= 0: continue
+        w = {n: x for n, x in w.items() if not n.startswith((side + 'Arm', side + 'ForeArm'))}
+        w['Spine1'] = w.get('Spine1', 0) + arm_w * t
+        if arm_w * (1 - t) > 1e-4: w[side + 'Arm'] = arm_w * (1 - t)
+        per_vertex[i] = w; armpit_fixed += 1
+print('ARMPITS_TO_TORSO', armpit_fixed, flush=True)
 # Rigid head: faces fully owned by the head (face, hair, hat).
 head_faces = set()
 for p in mesh.data.polygons:
