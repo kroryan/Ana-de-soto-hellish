@@ -18,6 +18,6 @@ $names = 'skin_marta_anamaria', 'skin_marta_anamaria.manifest', 'pic_marta_anama
 foreach ($n in $names) { Copy-Item (Join-Path $out $n) $rel -Force }
 $zip = Join-Path $root 'AnaMaria_Marta.zip'
 if (Test-Path $zip) { Remove-Item $zip }
-$files = @($names | % { Join-Path $rel $_ }) + @('LEEME.txt','Install_AnaMaria_Marta.ps1','Install_AnaMaria_Marta.cmd','Uninstall_AnaMaria_Marta.cmd','marta_fpp_patch.json' | % { Join-Path $rel $_ })
+$files = @($names | % { Join-Path $rel $_ }) + @(Join-Path $rel 'README.txt')  # releases never ship scripts: Nexus flags them
 Compress-Archive -Path $files -DestinationPath $zip
 "BUILD_OK $zip"
