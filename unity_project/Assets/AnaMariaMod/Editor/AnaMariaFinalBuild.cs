@@ -86,7 +86,8 @@ public static class AnaMariaFinalBuild {
   var headMat=AssetDatabase.LoadAssetAtPath<Material>(D+"AnaMariaHead.mat");
   if(headMat==null){headMat=new Material(mat);AssetDatabase.CreateAsset(headMat,D+"AnaMariaHead.mat");}
   headMat.shader=shader;headMat.CopyPropertiesFromMaterial(mat);
-  headMat.SetFloat("_HeadCameraRadius",.30f);EditorUtility.SetDirty(headMat);
+  // Keep the head outside the moving first-person camera during reactions.
+  headMat.SetFloat("_HeadCameraRadius",.49f);EditorUtility.SetDirty(headMat);
   var source=UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(D+"Skin.fbx"));
   var skin=MakeMartaSkeleton();
   var map=skin.GetComponentsInChildren<Transform>().ToDictionary(t=>t.name,t=>t);
@@ -284,6 +285,8 @@ public static class AnaMariaFinalBuild {
   cam.orthographic=false;cam.fieldOfView=65f;cam.nearClipPlane=.03f;
   var eye=map["Head"].position+new Vector3(0,.09f,.07f);
   Capture("AnaMaria_Marta_fpp",cam,eye,false,1280,720,eye+new Vector3(0,-.34f,1));
+  var displacedEye=eye+new Vector3(.26f,.04f,.09f);
+  Capture("AnaMaria_Marta_fpp_offset",cam,displacedEye,false,1280,720,displacedEye+new Vector3(0,-.34f,1));
   Capture("AnaMaria_Marta_fpp_down",cam,eye,false,1280,720,eye+new Vector3(0,-1,.44f));
   Capture("AnaMaria_Marta_fpp_wide",cam,new Vector3(-1.4f,1.4f,3.2f),false,1080,1080);
   cam.orthographic=true;
